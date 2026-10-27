@@ -12,13 +12,11 @@ export default {
   outputFileTracingRoot: monorepoRoot,
   experimental: {
     authInterrupts: true,
-    testProxy: z
-      .stringbool()
-      .default(false)
-      .parse(process.env["ENABLE_TEST_PROXY"]),
+    testProxy: z.stringbool().parse(process.env["ENABLE_TEST_PROXY"] ?? "false"),
     typedEnv: true,
   },
   cacheComponents: true,
+  partialPrefetching: true,
   typedRoutes: true,
   images: {
     remotePatterns: [

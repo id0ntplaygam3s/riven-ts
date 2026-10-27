@@ -16,7 +16,7 @@ const paths = {
 
 const client = getClient();
 
-export async function proxy(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   if (
     request.nextUrl.pathname === "/graphql" ||
     request.nextUrl.pathname.startsWith("/api/auth")
@@ -29,23 +29,37 @@ export async function proxy(request: NextRequest) {
     return NextResponse.rewrite(rewriteUrl);
   }
 
-  const { data: session } = await authClient.getSession();
+  let session;
+  try {
+    const result = await authClient.getSession();
+    session = result?.data;
+  } catch {
+    // If auth fails (e.g., backend unavailable), treat as unauthenticated
+    session = null;
+  }
 
   if (!session && request.nextUrl.pathname !== paths.login) {
     return NextResponse.redirect(new URL(paths.login, request.url));
   } else if (session && request.nextUrl.pathname === paths.login) {
     return NextResponse.redirect(new URL(paths.home, request.url));
   } else if (session?.user.role === "admin") {
-    const { data } = await client.query({ query: GET_INSTANCE_SETUP_REQUIRED });
+    let setupRequired = false;
+    try {
+      const { data } = await client.query({ query: GET_INSTANCE_SETUP_REQUIRED });
+      setupRequired = data?.instanceStatus.setupRequired ?? false;
+    } catch {
+      // If query fails, assume setup is not required to avoid blocking access
+      setupRequired = false;
+    }
 
     if (
       !request.nextUrl.pathname.startsWith(paths.instanceSetup) &&
-      data?.instanceStatus.setupRequired
+      setupRequired
     ) {
       return NextResponse.redirect(new URL(paths.instanceSetup, request.url));
     } else if (
       request.nextUrl.pathname.startsWith(paths.instanceSetup) &&
-      !data?.instanceStatus.setupRequired
+      !setupRequired
     ) {
       return NextResponse.redirect(new URL(paths.home, request.url));
     }
