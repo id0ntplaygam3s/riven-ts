@@ -20,18 +20,14 @@ export const GET_ITEM_SEASONS: TypedDocumentNode<
             id
             title
             number
-            posterUrl
+            posterPath
             completedEpisodeCount
-            mediaItem {
-              ... on MediaItem {
-                isRequested
-                state
-              }
-            }
+            isRequested
+            state
             episodes {
               id
               number
-              posterUrl
+              posterPath
               title
             }
           }

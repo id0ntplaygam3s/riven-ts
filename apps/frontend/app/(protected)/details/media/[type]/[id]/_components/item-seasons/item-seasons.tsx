@@ -26,7 +26,7 @@ function SeasonCarousel({ seasons }: SeasonCarouselProps) {
   return (
     <Carousel opts={{ dragFree: true, slidesToScroll: "auto" }}>
       <CarouselContent>
-        {seasons.map(({ episodes, id, number, posterUrl, mediaItem, completedEpisodeCount }) => {
+        {seasons.map(({ episodes, id, number, posterPath, completedEpisodeCount, isRequested, state }) => {
           const episodesLength = episodes.length;
 
           return (
@@ -35,17 +35,13 @@ function SeasonCarousel({ seasons }: SeasonCarouselProps) {
                 title={
                   number === 0 ? "Specials" : `Season ${number.toString()}`
                 }
-                image={posterUrl}
+                image={posterPath}
                 className="w-28 md:w-32 lg:w-36"
                 topRight={
-                  mediaItem ? (
-                    <StatusBadge
-                      isRequested={mediaItem.isRequested}
-                      state={mediaItem.state}
-                    />
-                  ) : (
-                    <StatusBadge isRequested={false} />
-                  )
+                  <StatusBadge
+                    isRequested={isRequested}
+                    state={state}
+                  />
                 }
               />
               {episodesLength > 0 && (
