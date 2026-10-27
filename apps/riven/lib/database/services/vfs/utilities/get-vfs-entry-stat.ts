@@ -223,6 +223,83 @@ export async function getVfsEntryStat(em: EntityManager, path: string) {
 
       return entryStat;
     }
+    case "/anime": {
+      const totalAnimeQuery = em.count(Show, {
+        seasons: {
+          episodes: {
+            filesystemEntries: {
+              $some: {
+                type: "media",
+                mediaItem: {
+                  type: "episode",
+                },
+              },
+            },
+          },
+        },
+        isAnime: true,
+      });
+
+      const oldestAnimeQuery = em.findOne(
+        MediaEntry,
+        {
+          type: "media",
+          mediaItem: {
+            type: "episode",
+            isAnime: true,
+          },
+        },
+        {
+          orderBy: {
+            createdAt: "asc nulls last",
+          },
+          fields: ["createdAt"],
+        },
+      );
+
+      const lastUpdatedAnimeQuery = em.findOne(
+        MediaEntry,
+        {
+          type: "media",
+          mediaItem: {
+            type: "episode",
+            isAnime: true,
+          },
+        },
+        {
+          orderBy: {
+            updatedAt: "desc nulls last",
+          },
+          fields: ["updatedAt"],
+        },
+      );
+
+      const [totalAnime, oldestAnime, lastUpdatedAnime] = await Promise.all([
+        totalAnimeQuery,
+        oldestAnimeQuery,
+        lastUpdatedAnimeQuery,
+      ]);
+
+      const fallbackDate = DateTime.utc().toJSDate();
+
+      const entryStat = stat(
+        {
+          mtime:
+            lastUpdatedAnime?.updatedAt ??
+            oldestAnime?.createdAt ??
+            fallbackDate,
+          atime:
+            lastUpdatedAnime?.updatedAt ??
+            oldestAnime?.createdAt ??
+            fallbackDate,
+          ctime: oldestAnime?.createdAt ?? fallbackDate,
+          mode: "dir",
+        },
+        totalAnime,
+      );
+
+      return entryStat;
+    }
   }
 
   const pathInfo = PathInfo.safeParse(path);

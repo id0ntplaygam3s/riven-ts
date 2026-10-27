@@ -89,11 +89,18 @@ export abstract class FileSystemEntry {
   public type!: FileSystemEntryType;
 
   /**
-   * The base directory for this media item, e.g. "movies" or "shows"
+   * The base directory for this media item, e.g. "movies", "shows", or "anime"
    */
   @Property({ persist: false, hidden: true })
-  public get baseDirectory(): Opt<Hidden<"movies" | "shows">> {
-    const { type: mediaItemType } = this.mediaItem.getEntity();
+  public get baseDirectory(): Opt<Hidden<"movies" | "shows" | "anime">> {
+    const mediaItem = this.mediaItem.getEntity();
+
+    // Anime items get their own mount point
+    if (mediaItem.isAnime) {
+      return "anime";
+    }
+
+    const { type: mediaItemType } = mediaItem;
 
     if (mediaItemType === "movie") {
       return "movies";

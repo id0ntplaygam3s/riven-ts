@@ -1,6 +1,7 @@
 import { PathInfo } from "#database/services/vfs/schemas/path-info.schema.ts";
 import { PersistentDirectory } from "#database/services/vfs/schemas/persistent-directory.schema.ts";
 
+import { getAnimeDirectoryEntries } from "./get-anime-directory-entries.ts";
 import { getMoviesDirectoryEntries } from "./get-movies-directory-entries.ts";
 import { getShowsDirectoryEntries } from "./get-shows-directory-entries.ts";
 
@@ -26,7 +27,14 @@ export async function getVfsDirectoryEntryPaths(
     case "season-episodes": {
       return getShowsDirectoryEntries(em, pathInfo);
     }
+    case "all-anime":
+    case "single-anime":
+    case "anime-seasons":
+    case "anime-season-episodes": {
+      return getAnimeDirectoryEntries(em, pathInfo);
+    }
     case "single-episode":
+    case "single-anime-episode":
     case "subtitle-file": {
       return [pathInfo.base];
     }

@@ -61,6 +61,7 @@ catalog:
   "@apollo/client": ^4.1.9
   "@apollo/client-devtools-vscode": ^4.25.6
   "@apollo/client-integration-nextjs": ^0.14.5
+  '@apollo/client-react-streaming': ^0.14.5
   "@apollo/datasource-rest": 6.4.1
   "@apollo/server": ^5.5.1
   "@apollo/utils.keyvadapter": ^4.0.1

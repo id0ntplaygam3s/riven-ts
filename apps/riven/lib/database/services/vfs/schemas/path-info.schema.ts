@@ -2,14 +2,14 @@ import path from "node:path";
 import z from "zod";
 
 const PATH_PATTERN =
-  /^\/(?<type>movies|shows)(?<titlePath>\/(?<title>[^/]+)(?<seasonPath>\/Season (?<season>\d{2})?)?)?/u;
+  /^\/(?<type>movies|shows|anime)(?<titlePath>\/(?<title>[^/]+)(?<seasonPath>\/Season (?<season>\d{2})?)?)?/u;
 
 const TMDB_ID_PATTERN = /\{tmdb-(?<tmdbId>\d+)\}/u;
 const TVDB_ID_PATTERN = /\{tvdb-(?<tvdbId>\d+)\}/u;
 const EPISODE_PATTERN = /s\d{2}e(?<episode>\d{2})/u;
 
 const pathGroupsSchema = z.object({
-  type: z.enum(["movies", "shows"]),
+  type: z.enum(["movies", "shows", "anime"]),
   title: z.string().optional(),
   season: z.coerce.number().optional(),
 });
@@ -29,6 +29,11 @@ type PathType =
   | "show-seasons"
   | "season-episodes"
   | "single-episode"
+  | "all-anime"
+  | "single-anime"
+  | "anime-seasons"
+  | "anime-season-episodes"
+  | "single-anime-episode"
   | "subtitle-file";
 
 const determinePathType = (
@@ -44,6 +49,22 @@ const determinePathType = (
 
   if (pathGroups.type === "movies") {
     return tmdbId ? "single-movie" : "all-movies";
+  }
+
+  if (pathGroups.type === "anime") {
+    if (tvdbId && !pathGroups.season) {
+      return "anime-seasons";
+    }
+
+    if (tvdbId && pathGroups.season && !episode) {
+      return "anime-season-episodes";
+    }
+
+    if (tvdbId && pathGroups.season && episode) {
+      return "single-anime-episode";
+    }
+
+    return tmdbId ? "single-anime" : "all-anime";
   }
 
   if (tvdbId && !pathGroups.season) {

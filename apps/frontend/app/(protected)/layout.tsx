@@ -1,7 +1,7 @@
 import {
   CalendarDays,
-  Fire,
   FileClock,
+  Flame,
   Home,
   LayoutDashboard,
   Library,
@@ -40,7 +40,7 @@ export default async function ProtectedLayout({ children }: LayoutProps<"/">) {
     },
     { href: "/library", icon: <Library />, label: "Library" },
     { href: "/explore", icon: <Search />, label: "Explore" },
-    { href: "/lists/trending/movies", icon: <Fire />, label: "Trending" },
+    { href: "/lists/trending/movies", icon: <Flame />, label: "Trending" },
     { href: "/lists/trending/anime", icon: <Sparkles />, label: "Anime" },
     {
       href: "/calendar",

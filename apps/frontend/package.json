@@ -37,6 +37,7 @@
   "dependencies": {
     "@apollo/client": "catalog:",
     "@apollo/client-integration-nextjs": "catalog:",
+    "@apollo/client-react-streaming": "catalog:",
     "@base-ui/react": "catalog:",
     "@better-auth/passkey": "catalog:",
     "@bprogress/next": "catalog:",

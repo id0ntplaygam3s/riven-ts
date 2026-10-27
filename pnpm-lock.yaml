@@ -176,6 +176,9 @@ catalogs:
     '@apollo/client-integration-nextjs':
       specifier: ^0.14.5
       version: 0.14.5
+    '@apollo/client-react-streaming':
+      specifier: ^0.14.5
+      version: 0.14.5
     '@apollo/datasource-rest':
       specifier: 6.4.1
       version: 6.4.1
@@ -837,6 +840,9 @@ importers:
       '@apollo/client-integration-nextjs':
         specifier: 'catalog:'
         version: 0.14.5(@apollo/client@4.1.9(graphql-ws@6.4.1(graphql@16.14.0)(ws@8.22.0))(graphql@16.14.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(rxjs@7.8.2))(@types/react@19.3.0)(graphql@16.14.0)(next@16.4.3(@babel/core@7.29.7(supports-color@10.2.2))(@opentelemetry/api@1.9.1)(@playwright/test@1.62.1)(@types/node@24.12.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(rxjs@7.8.2)
+      '@apollo/client-react-streaming':
+        specifier: 'catalog:'
+        version: 0.14.5(@apollo/client@4.1.9(graphql-ws@6.4.1(graphql@16.14.0)(ws@8.22.0))(graphql@16.14.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(rxjs@7.8.2))(@types/react@19.3.0)(graphql@16.14.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(rxjs@7.8.2)
       '@base-ui/react':
         specifier: 'catalog:'
         version: 1.8.0(@date-fns/tz@1.5.0)(@types/react@19.3.0)(date-fns@4.4.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)

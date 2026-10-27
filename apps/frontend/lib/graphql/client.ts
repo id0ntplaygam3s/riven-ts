@@ -4,10 +4,6 @@ import { setContext } from "@apollo/client/link/context";
 import { getMainDefinition } from "@apollo/client/utilities";
 import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
 import { createClient } from "graphql-ws";
-import {
-  registerApolloClient,
-  InMemoryCache as NextInMemoryCache,
-} from "@apollo/client-integration-nextjs";
 
 import { privateEnvironment } from "#environment/private-environment.schema.ts";
 
@@ -50,7 +46,7 @@ function createApolloClient(): ApolloClientType {
   );
 
   return new ApolloClient({
-    cache: new NextInMemoryCache({
+    cache: new InMemoryCache({
       possibleTypes: {
         MediaItem: ["Movie", "Show", "Season", "Episode"],
         ShowLikeMediaItem: ["Show", "Season", "Episode"],
@@ -65,6 +61,20 @@ function createApolloClient(): ApolloClientType {
   });
 }
 
-export const { getClient, query, PreloadQuery } = registerApolloClient(
-  createApolloClient,
-);
+// Simple client singleton for SSR/SSG
+let clientInstance: ApolloClientType | null = null;
+
+export function getClient(): ApolloClientType {
+  if (!clientInstance) {
+    clientInstance = createApolloClient();
+  }
+  return clientInstance;
+}
+
+export async function query<T>(options: Parameters<ApolloClientType["query"]>[0]): Promise<Awaited<ReturnType<ApolloClientType["query"]>>> {
+  return getClient().query(options);
+}
+
+// PreloadQuery is not available without registerApolloClient
+// For RSC data fetching, use getClient().query() directly in server components
+export const PreloadQuery = null as any;
