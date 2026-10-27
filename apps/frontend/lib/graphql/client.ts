@@ -19,12 +19,8 @@ function createApolloClient(): ApolloClientType {
     .replace("https://", "wss://");
   const apiKey = privateEnvironment.GRAPHQL_API_KEY;
 
-  // SSR (Node.js) needs absolute Docker-internal URL; browser uses relative proxy route
-  const isBrowser = typeof window !== "undefined";
-  const httpUri = isBrowser ? "/api/graphql" : `${baseUrl}/graphql`;
-
   const httpLink = new HttpLink({
-    uri: httpUri,
+    uri: `${baseUrl}/graphql`,
   });
 
   // Add auth header to HTTP requests
@@ -35,29 +31,11 @@ function createApolloClient(): ApolloClientType {
     },
   }));
 
-  // WebSocket: browser connects directly to backend's public port
-  // SSR uses Docker internal URL (server-to-server)
-  let wsEndpoint: string;
-  if (isBrowser) {
-    // Backend public WebSocket URL: ws://<public-host>:<backend-host-port>/graphql
-    // e.g., ws://dulkoan-server.tailc37119.ts.net:8080/graphql
-    const backendPublicUrl =
-      privateEnvironment.BACKEND_PUBLIC_WS_URL || "ws://localhost:8080";
-    wsEndpoint = `${backendPublicUrl}/graphql`;
-  } else {
-    wsEndpoint = `${wsUrl}/graphql`;
-  }
-
   const wsLink = new GraphQLWsLink(
     createClient({
-      url: wsEndpoint,
+      url: `${wsUrl}/graphql`,
       connectionParams: {
         ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
-      },
-      on: {
-        error: (err) => {
-          console.error("GraphQL WebSocket error:", err);
-        },
       },
     }),
   );
