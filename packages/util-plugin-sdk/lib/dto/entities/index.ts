@@ -1,5 +1,6 @@
 export * from "./filesystem/index.ts";
 export * from "./media-items/index.ts";
 export * from "./requests/item-request.entity.ts";
+export * from "./sources/source-config.entity.ts";
 export * from "./streams/stream.entity.ts";
 export * from "./streams/blacklisted-stream.entity.ts";

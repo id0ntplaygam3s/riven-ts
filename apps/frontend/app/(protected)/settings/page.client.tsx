@@ -13,9 +13,16 @@ import { DangerZone } from "#components/settings/danger-zone/danger-zone.tsx";
 import { GeneralTab } from "#components/settings/general-tab/general-tab.tsx";
 import { PluginsTab } from "#components/settings/plugins-tab/plugins-tab.tsx";
 import { RankingTab } from "#components/settings/ranking-tab/ranking-tab.tsx";
+import { SourcesTab } from "#components/settings/sources-tab/sources-tab.tsx";
 
-/** Settings route with General, Plugins and Ranking tabs. */
-export function SettingsPage() {
+import type { SourceConfig } from "#app/_types/__generated__/graphql.ts";
+
+/** Settings route with General, Plugins, Ranking and Sources tabs. */
+interface SettingsPageProps {
+  sources?: SourceConfig[];
+}
+
+export function SettingsPage({ sources = [] }: SettingsPageProps) {
   const [activeTab, setActiveTab] = useState("general");
 
   const canManageSettings = true as boolean;
@@ -26,12 +33,13 @@ export function SettingsPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-semibold tracking-tight">Settings</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Configure Riven, plugins, and ranking preferences.
+            Configure Riven, plugins, sources, and ranking preferences.
           </p>
         </div>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6 w-full justify-start">
             <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="sources">Sources</TabsTrigger>
             <TabsTrigger value="plugins">Plugins</TabsTrigger>
             <TabsTrigger value="ranking">Ranking</TabsTrigger>
           </TabsList>
@@ -48,6 +56,9 @@ export function SettingsPage() {
                 <DangerZone />
               </div>
             )}
+          </TabsContent>
+          <TabsContent value="sources">
+            <SourcesTab initialSources={sources} />
           </TabsContent>
           <TabsContent value="plugins">
             <PluginsTab

@@ -13,6 +13,7 @@ import { MovieResolver } from "./movie.resolver.ts";
 import { SeasonResolver } from "./season.resolver.ts";
 import { ShareLogsResolver } from "./share-logs.resolver.ts";
 import { ShowResolver } from "./show.resolver.ts";
+import { SourceConfigResolver } from "./source-config/source-config.resolver.ts";
 import { VfsResolver } from "./vfs/vfs.resolver.ts";
 
 import type { Constructor } from "type-graphql";
@@ -34,4 +35,5 @@ export const resolvers = [
   IndexerEpisodeResolver,
   AuthResolver,
   InstanceResolver,
+  SourceConfigResolver,
 ] as const satisfies Constructor<object>[];
