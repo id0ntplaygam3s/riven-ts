@@ -17,14 +17,17 @@ import { MediaItemUnion } from "@repo/util-plugin-sdk/dto/unions/media-item.unio
 import chalk from "chalk";
 import { DateTime } from "luxon";
 import assert from "node:assert";
+import { validateOrReject } from "class-validator";
 import {
   Arg,
   Args,
   Ctx,
+  Field,
   FieldResolver,
   ID,
   Int,
   Mutation,
+  ObjectType,
   Query,
   Resolver,
   Root,
@@ -151,14 +154,87 @@ export class MediaItemResolver {
     return [...resetItems];
   }
 
-  @Mutation(() => MediaItemUnion)
-  public retryMediaItem(
+  @Mutation(() => [MediaItemUnion])
+  public async retryMediaItem(
     @Arg("mediaItemId", () => ID) mediaItemId: UUID,
+    @CoreContext() { services: { mediaItemService } }: CoreContext,
     @Ctx() { logger }: ApolloServerContext,
-  ) {
-    logger.warn(`[PLACEHOLDER]: Retrying media item with ID: ${mediaItemId}`);
+  ): Promise<MediaItem[]> {
+    const item = await mediaItemService.getMediaItemById(mediaItemId);
 
-    return null;
+    // Reset the item to re-trigger processing (same as reset for failed items)
+    const resetItems = await mediaItemService.resetMediaItem(item);
+
+    const { enqueueProcessMediaItem } =
+      await import("#message-queue/flows/process-media-item/enqueue-process-media-item.ts");
+
+    await clearDeduplicationJob(
+      "process-media-item",
+      `process-${item.type}-${item.id}`,
+    );
+
+    await enqueueProcessMediaItem({
+      id: item.id,
+      isRootItem: mediaItemService.rootItemTypes.has(item.type),
+      fanOut: false,
+    });
+
+    logger.info(
+      `Retried ${chalk.bold(item.fullTitle)} and enqueued for processing.`,
+    );
+
+    return [...resetItems];
+  }
+
+  @Mutation(() => Boolean)
+  public async removeMediaItem(
+    @Arg("mediaItemId", () => ID) mediaItemId: UUID,
+    @CoreContext() {
+      services: { mediaItemService, streamService, filesystemEntryService },
+      em,
+    }: CoreContext,
+    @Ctx() { sendEvent, logger }: ApolloServerContext,
+  ): Promise<boolean> {
+    const item = await mediaItemService.getMediaItemById(mediaItemId);
+
+    // Clear any pending jobs for this item
+    await clearDeduplicationJob(
+      "process-media-item",
+      `process-${item.type}-${item.id}`,
+    );
+
+    // Get the full title before deleting
+    const fullTitle = item.fullTitle;
+    const itemType = item.type;
+
+    // Delete associated streams
+    for (const stream of await item.streams.loadItems()) {
+      await em.remove(stream).flush();
+    }
+
+    // Delete associated filesystem entries
+    for (const entry of await item.filesystemEntries.loadItems()) {
+      await em.remove(entry).flush();
+    }
+
+    // Delete associated blacklisted streams
+    for (const entry of await item.blacklistedStreams.loadItems()) {
+      await em.remove(entry).flush();
+    }
+
+    // Delete the media item itself
+    await em.remove(item).flush();
+
+    logger.info(
+      `Removed ${chalk.bold(fullTitle)} (${itemType}) from the database.`,
+    );
+
+    sendEvent({
+      type: "riven.media-item.removed",
+      item: { id: mediaItemId, type: itemType, fullTitle },
+    });
+
+    return true;
   }
 
   @Mutation(() => MediaItemUnion)
@@ -179,6 +255,94 @@ export class MediaItemResolver {
     logger.warn(`[PLACEHOLDER]: Resuming media item with ID: ${mediaItemId}`);
 
     return null;
+  }
+
+  @Mutation(() => Boolean, {
+    description:
+      "Manually add a stream (by torrent hash) to a media item and re-process it.",
+  })
+  public async manualScrape(
+    @Arg("mediaItemId", () => ID) mediaItemId: UUID,
+    @Arg("infoHash", () => String) infoHash: string,
+    @CoreContext() {
+      services: { mediaItemService, streamService },
+      em,
+    }: CoreContext,
+    @Ctx() { sendEvent, logger }: ApolloServerContext,
+  ): Promise<boolean> {
+    const item = await mediaItemService.getMediaItemById(mediaItemId);
+
+    // Validate the infoHash format (40 hex chars for SHA-1)
+    const hashPattern = /^[a-fA-F0-9]{40}$/;
+    if (!hashPattern.test(infoHash)) {
+      throw new Error(
+        "Invalid torrent hash. Expected a 40-character hexadecimal string.",
+      );
+    }
+
+    // Check if this hash already exists for this item
+    const existingStream = await em.findOne(Stream, { infoHash });
+    if (existingStream) {
+      // Check if it's already linked to this item
+      const itemStreams = await item.streams.loadItems();
+      if (itemStreams.some((s) => s.infoHash === infoHash)) {
+        throw new Error(
+          `Stream with hash ${infoHash} is already linked to this media item.`,
+        );
+      }
+    }
+
+    // Create a new stream entry with the manual hash
+    const stream = em.create(Stream, {
+      infoHash,
+      parsedData: {
+        source: "manual",
+        quality: "unknown",
+        resolution: "unknown",
+        size: 0,
+        seeders: 0,
+        leechers: 0,
+        title: `Manual: ${infoHash}`,
+        language: "unknown",
+        provider: "manual",
+        plugin: "manual",
+        publishedAt: DateTime.utc().toJSDate(),
+      },
+    });
+
+    await validateOrReject(stream);
+    await em.flush();
+
+    // Link the stream to the media item
+    item.streams.add(stream);
+
+    // Clear any pending jobs for this item
+    await clearDeduplicationJob(
+      "process-media-item",
+      `process-${item.type}-${item.id}`,
+    );
+
+    // Re-enqueue the item for processing to update its state
+    const { enqueueProcessMediaItem } =
+      await import("#message-queue/flows/process-media-item/enqueue-process-media-item.ts");
+
+    await enqueueProcessMediaItem({
+      id: item.id,
+      isRootItem: mediaItemService.rootItemTypes.has(item.type),
+      fanOut: false,
+    });
+
+    logger.info(
+      `Manually added stream ${chalk.bold(infoHash)} to ${chalk.bold(item.fullTitle)}.`,
+    );
+
+    sendEvent({
+      type: "riven.media-item.manual-scrape",
+      item,
+      infoHash,
+    });
+
+    return true;
   }
 
   @Mutation(() => Boolean)

@@ -16,6 +16,18 @@ export const RETRY_MEDIA_ITEM = `
   }
 `;
 
+export const REMOVE_MEDIA_ITEM = `
+  mutation RemoveMediaItem($mediaItemId: ID!) {
+    removeMediaItem(mediaItemId: $mediaItemId)
+  }
+`;
+
+export const MANUAL_SCRAPE = `
+  mutation ManualScrape($mediaItemId: ID!, $infoHash: String!) {
+    manualScrape(mediaItemId: $mediaItemId, infoHash: $infoHash)
+  }
+`;
+
 export const PAUSE_MEDIA_ITEM = `
   mutation PauseMediaItem($mediaItemId: ID!) {
     pauseMediaItem(mediaItemId: $mediaItemId)

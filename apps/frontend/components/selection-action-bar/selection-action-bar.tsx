@@ -9,13 +9,14 @@ import type { ComponentType, SVGProps } from "react";
 export interface SelectionAction {
   label: string;
   icon: ComponentType<SVGProps<SVGSVGElement>>;
-  handleClick: () => void;
+  handleClick: (selectedIds: string[]) => void;
   variant?: "default" | "destructive";
 }
 
 export interface SelectionActionBarProps {
   count: number;
   actions: [SelectionAction, ...SelectionAction[]];
+  selectedIds: string[];
   disabled?: boolean;
   onClear: () => void;
 }
@@ -27,6 +28,7 @@ export interface SelectionActionBarProps {
 export function SelectionActionBar({
   actions,
   count,
+  selectedIds,
   onClear,
   disabled,
 }: SelectionActionBarProps) {
@@ -47,7 +49,7 @@ export function SelectionActionBar({
               variant="ghost"
               size="sm"
               disabled={disabled}
-              onClick={action.handleClick}
+              onClick={() => action.handleClick(selectedIds)}
               className={cn(
                 "h-9 gap-2 rounded-xl px-3 transition-all",
                 action.variant === "destructive"

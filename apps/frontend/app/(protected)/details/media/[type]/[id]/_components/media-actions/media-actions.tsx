@@ -12,6 +12,7 @@ import {
   ShieldBan,
   Loader2,
   FileJson,
+  Hash,
 } from "lucide-react";
 import { Button } from "#components/ui/button";
 import * as Dialog from "#components/ui/dialog";
@@ -20,6 +21,8 @@ import {
   REQUEST_ITEM,
   RESET_MEDIA_ITEM,
   RETRY_MEDIA_ITEM,
+  REMOVE_MEDIA_ITEM,
+  MANUAL_SCRAPE,
   PAUSE_MEDIA_ITEM,
   RESUME_MEDIA_ITEM,
   BLACKLIST_ACTIVE_STREAM,
@@ -50,6 +53,8 @@ export function MediaActions({
   indexerData,
 }: MediaActionsProps) {
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
+  const [scrapeHash, setScrapeHash] = useState("");
+  const [showScrapeDialog, setShowScrapeDialog] = useState(false);
 
   const isCompleted = state === "Completed";
   const isPaused = state === "Paused";
@@ -110,6 +115,35 @@ export function MediaActions({
       "retry",
       `Retrying "${title}"`,
     );
+  };
+
+  const handleRemove = () => {
+    runMutation(
+      REMOVE_MEDIA_ITEM,
+      { mediaItemId: itemId.toString() },
+      "remove",
+      `Removed "${title}"`,
+    );
+  };
+
+  const handleManualScrape = () => {
+    if (!scrapeHash.trim()) {
+      toast.error("Please enter a torrent hash");
+      return;
+    }
+    const hashPattern = /^[a-fA-F0-9]{40}$/;
+    if (!hashPattern.test(scrapeHash.trim())) {
+      toast.error("Invalid torrent hash. Must be 40 hexadecimal characters.");
+      return;
+    }
+    runMutation(
+      MANUAL_SCRAPE,
+      { mediaItemId: itemId.toString(), infoHash: scrapeHash.trim().toLowerCase() },
+      "manual-scrape",
+      `Added stream to "${title}"`,
+    );
+    setScrapeHash("");
+    setShowScrapeDialog(false);
   };
 
   const handlePause = () => {
@@ -194,6 +228,70 @@ export function MediaActions({
             Retry
           </Button>
 
+          {/* Manual Scrape */}
+          <Dialog.Root open={showScrapeDialog} onOpenChange={setShowScrapeDialog}>
+            <Dialog.Trigger asChild>
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={actionInProgress !== null}
+                className="border-border text-muted-foreground hover:bg-muted hover:text-foreground bg-transparent px-4"
+              >
+                <Hash className="mr-1.5 h-4 w-4" />
+                Manual Scrape
+              </Button>
+            </Dialog.Trigger>
+            <Dialog.Content className="w-full max-w-md">
+              <Dialog.Header>
+                <Dialog.Title>Manual Scrape</Dialog.Title>
+                <Dialog.Description>
+                  Enter a torrent hash (40 hex characters) to add a stream manually.
+                </Dialog.Description>
+              </Dialog.Header>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-zinc-300">
+                    Torrent Hash
+                  </label>
+                  <input
+                    type="text"
+                    value={scrapeHash}
+                    onChange={(e) => setScrapeHash(e.target.value)}
+                    placeholder="e.g. a1b2c3d4e5f6..."
+                    className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 font-mono"
+                    disabled={actionInProgress !== null}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleManualScrape();
+                    }}
+                  />
+                  <p className="text-xs text-zinc-500">
+                    Paste the 40-character SHA-1 hash from your torrent file or magnet link.
+                  </p>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowScrapeDialog(false)}
+                    disabled={actionInProgress !== null}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleManualScrape}
+                    disabled={actionInProgress !== null || !scrapeHash.trim()}
+                  >
+                    {actionInProgress === "manual-scrape" ? (
+                      <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Download className="mr-1.5 h-4 w-4" />
+                    )}
+                    Add Stream
+                  </Button>
+                </div>
+              </div>
+            </Dialog.Content>
+          </Dialog.Root>
+
           {/* Pause/Resume */}
           {!isCompleted && (
             <Button
@@ -213,6 +311,22 @@ export function MediaActions({
               {isPaused ? "Resume" : "Pause"}
             </Button>
           )}
+
+          {/* Remove */}
+          <Button
+            variant="destructive"
+            size="sm"
+            disabled={actionInProgress === "remove"}
+            onClick={handleRemove}
+            className="px-4"
+          >
+            {actionInProgress === "remove" ? (
+              <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+            ) : (
+              <Trash2 className="mr-1.5 h-4 w-4" />
+            )}
+            Remove
+          </Button>
 
           {/* Blacklist Active Stream */}
           <Button

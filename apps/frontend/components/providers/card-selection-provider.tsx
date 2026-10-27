@@ -16,7 +16,10 @@ const CardSelectionContext = createContext<
 >(undefined);
 
 interface CardSelectionProviderProps {
-  actions: [SelectionAction, ...SelectionAction[]];
+  actions: (context: {
+    selectedItems: Set<string>;
+    clearSelection: () => void;
+  }) => [SelectionAction, ...SelectionAction[]];
 }
 
 export function CardSelectionProvider({
@@ -45,7 +48,7 @@ export function CardSelectionProvider({
     setSelectedItems(new Set());
   }
 
-  const value = useMemo<CardSelectionContextValue>(
+  const contextValue = useMemo<CardSelectionContextValue>(
     () => ({
       selectedItems,
       toggleItemSelection,
@@ -54,13 +57,20 @@ export function CardSelectionProvider({
     [selectedItems],
   );
 
+  // Build actions with context
+  const actionItems = useMemo(
+    () => actions({ selectedItems, clearSelection }),
+    [actions, selectedItems],
+  );
+
   return (
-    <CardSelectionContext.Provider value={value}>
+    <CardSelectionContext.Provider value={contextValue}>
       {children}
       {selectedItems.size > 0 && (
         <SelectionActionBar
           count={selectedItems.size}
-          actions={actions}
+          actions={actionItems}
+          selectedIds={Array.from(selectedItems)}
           // disabled={actionInProgress}
           onClear={() => {
             clearSelection();

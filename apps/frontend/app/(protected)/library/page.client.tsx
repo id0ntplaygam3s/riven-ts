@@ -19,6 +19,9 @@ import { isFeatureEnabled } from "#lib/enabled-features.ts";
 
 import { InfiniteItemGrid } from "../_components/infinite-item-grid/infinite-item-grid";
 import { searchLibrary } from "./_actions/search.action";
+import { resetItems } from "./_actions/reset-items.action";
+import { retryItems } from "./_actions/retry-items.action";
+import { removeItems } from "./_actions/remove-items.action";
 import { LibraryMessage } from "./_components/library-message";
 import { LibrarySearchInputs } from "./_components/library-search-inputs";
 import { LibrarySearchForm } from "./_schemas/library-search.form-schema";
@@ -171,88 +174,67 @@ export function LibraryPage({
             </header>
             {results.length > 0 ? (
               <CardSelectionProvider
-                actions={[
-                  {
-                    label: "Reset",
-                    icon: ListChecks,
-                    handleClick: () => {
-                      // actionInProgress = true;
-                      // try {
-                      //   const result = await reset_items({
-                      //     ids: itemsStore.items.map((id) => id.toString()),
-                      //   });
-                      //   if (result.count > 0) {
-                      //     toast.success(`Reset ${result.count} items`);
-                      //   } else {
-                      //     toast.info("No matching items were reset");
-                      //   }
-                      //   // itemsStore.clear();
-                      //   // await refreshLiveLibrary();
-                      // } catch (error) {
-                      //   if (error instanceof Error) {
-                      //     toast.error(`Error: ${error.message}`);
-                      //   } else {
-                      //     toast.error("An unknown error occurred");
-                      //   }
-                      // } finally {
-                      //   actionInProgress = false;
-                      // }
-                    },
-                  },
-                  {
-                    label: "Retry",
-                    icon: Loader2,
-                    handleClick: () => {
-                      // actionInProgress = true;
-                      try {
-                        // const result = await retry_items({
-                        // ids: itemsStore.items.map((id) => id.toString()),
-                        // });
-                        // if (result.count > 0) {
-                        //   toast.success(
-                        //     `Marked ${result.count} items for retry`,
-                        //   );
-                        // } else {
-                        //   toast.info("No matching items were marked for retry");
-                        // }
-                        // itemsStore.clear();
-                        // await refreshLiveLibrary();
-                      } catch (error) {
-                        if (error instanceof Error) {
-                          toast.error(`Error: ${error.message}`);
-                        } else {
-                          toast.error("An unknown error occurred");
+                actions={({ selectedItems: selectedItemsSet, clearSelection }) => {
+                  const selectedIds = Array.from(selectedItemsSet);
+
+                  return [
+                    {
+                      label: "Reset",
+                      icon: ListChecks,
+                      handleClick: async () => {
+                        if (selectedIds.length === 0) {
+                          toast.info("No items selected");
+                          return;
                         }
-                      } finally {
-                        // actionInProgress = false;
-                      }
-                    },
-                  },
-                  {
-                    label: "Remove",
-                    icon: Trash,
-                    variant: "destructive",
-                    handleClick: () => {
-                      // actionInProgress = true;
-                      try {
-                        // await remove_items({
-                        //   ids: itemsStore.items.map((id) => id.toString()),
-                        // });
-                        // toast.success(`Removed ${itemsStore.count} items`);
-                        // itemsStore.clear();
-                        // await refreshLiveLibrary();
-                      } catch (error) {
-                        if (error instanceof Error) {
-                          toast.error(`Error: ${error.message}`);
-                        } else {
-                          toast.error("An unknown error occurred");
+                        const result = await resetItems(selectedIds);
+                        if (result?.data?.count != null && result.data.count > 0) {
+                          toast.success(`Reset ${result.data.count} items`);
                         }
-                      } finally {
-                        // actionInProgress = false;
-                      }
+                        if (result?.data?.errors && result.data.errors.length > 0) {
+                          toast.error(`${result.data.errors.length} items failed`);
+                        }
+                        clearSelection();
+                      },
                     },
-                  },
-                ]}
+                    {
+                      label: "Retry",
+                      icon: Loader2,
+                      handleClick: async () => {
+                        if (selectedIds.length === 0) {
+                          toast.info("No items selected");
+                          return;
+                        }
+                        const result = await retryItems(selectedIds);
+                        if (result?.data?.count != null && result.data.count > 0) {
+                          toast.success(`Retried ${result.data.count} items`);
+                        }
+                        if (result?.data?.errors && result.data.errors.length > 0) {
+                          toast.error(`${result.data.errors.length} items failed`);
+                        }
+                        clearSelection();
+                      },
+                    },
+                    {
+                      label: "Remove",
+                      icon: Trash,
+                      variant: "destructive",
+                      handleClick: async () => {
+                        if (selectedIds.length === 0) {
+                          toast.info("No items selected");
+                          return;
+                        }
+                        const result = await removeItems(selectedIds);
+                        if (result?.data?.count != null && result.data.count > 0) {
+                          toast.success(`Removed ${result.data.count} items`);
+                        }
+                        if (result?.data?.errors && result.data.errors.length > 0) {
+                          toast.error(`${result.data.errors.length} items failed`);
+                        }
+                        clearSelection();
+                      },
+                    },
+                  ];
+                }}
               >
                 <ItemGrid>
                   <InfiniteItemGrid
