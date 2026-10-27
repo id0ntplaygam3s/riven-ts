@@ -3,7 +3,6 @@ import {
   Movie,
   Season,
   Show,
-  SubtitleEntry,
 } from "@repo/util-plugin-sdk/dto/entities";
 
 import { getVfsSubtitleEntry } from "./get-vfs-subtitle-entry.ts";
@@ -133,7 +132,7 @@ export async function getEntry(em: EntityManager, pathInfo: PathInfo) {
               },
             }),
           },
-          { fields: ["createdAt", "updatedAt", "filesystemEntries.fileSize"] },
+          { fields: ["createdAt", "updatedAt"] },
         );
       }
 
