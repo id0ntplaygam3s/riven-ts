@@ -4,7 +4,6 @@ import z from "zod";
 
 import { getClient } from "#lib/graphql/client.ts";
 import { permissionActionClient } from "#lib/server-actions/action-client.ts";
-import { ItemPermission } from "@repo/util-auth/access-control";
 
 const RETRY_MEDIA_ITEM = `
   mutation RetryMediaItem($mediaItemId: ID!) {
@@ -13,11 +12,6 @@ const RETRY_MEDIA_ITEM = `
 `;
 
 export const retryItems = permissionActionClient
-  .meta({
-    permissions: {
-      item: [ItemPermission.retry],
-    },
-  })
   .inputSchema(z.array(z.string()))
   .action(async ({ parsedInput: itemIds }) => {
     let count = 0;

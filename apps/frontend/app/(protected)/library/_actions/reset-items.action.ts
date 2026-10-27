@@ -4,7 +4,6 @@ import z from "zod";
 
 import { getClient } from "#lib/graphql/client.ts";
 import { permissionActionClient } from "#lib/server-actions/action-client.ts";
-import { ItemPermission } from "@repo/util-auth/access-control";
 
 const RESET_MEDIA_ITEM = `
   mutation ResetMediaItem($mediaItemId: ID!) {
@@ -13,11 +12,6 @@ const RESET_MEDIA_ITEM = `
 `;
 
 export const resetItems = permissionActionClient
-  .meta({
-    permissions: {
-      item: [ItemPermission.reset],
-    },
-  })
   .inputSchema(z.array(z.string()))
   .action(async ({ parsedInput: itemIds }) => {
     let count = 0;

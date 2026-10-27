@@ -4,14 +4,8 @@ import z from "zod";
 
 import { getClient } from "#lib/graphql/client.ts";
 import { permissionActionClient } from "#lib/server-actions/action-client.ts";
-import { ItemPermission } from "@repo/util-auth/access-control";
 
 export const removeItems = permissionActionClient
-  .meta({
-    permissions: {
-      item: [ItemPermission.delete],
-    },
-  })
   .inputSchema(z.array(z.string()))
   .action(async ({ parsedInput: itemIds }) => {
     // We need to call the GraphQL mutation for each item

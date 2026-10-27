@@ -14,23 +14,27 @@ export const GET_ITEM_SEASONS: TypedDocumentNode<
     tmdbItem(id: $id, type: show) {
       id
       type
-      seasons {
-        id
-        title
-        number
-        posterUrl
-        completedEpisodeCount
-        mediaItem {
-          ... on MediaItem {
-            isRequested
-            state
+      mediaItem {
+        ... on Show {
+          seasons {
+            id
+            title
+            number
+            posterUrl
+            completedEpisodeCount
+            mediaItem {
+              ... on MediaItem {
+                isRequested
+                state
+              }
+            }
+            episodes {
+              id
+              number
+              posterUrl
+              title
+            }
           }
-        }
-        episodes {
-          id
-          number
-          posterUrl
-          title
         }
       }
     }
