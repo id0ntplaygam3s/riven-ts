@@ -26,7 +26,7 @@ function SeasonCarousel({ seasons }: SeasonCarouselProps) {
   return (
     <Carousel opts={{ dragFree: true, slidesToScroll: "auto" }}>
       <CarouselContent>
-        {seasons.map(({ episodes, id, number, posterUrl, mediaItem }) => {
+        {seasons.map(({ episodes, id, number, posterUrl, mediaItem, completedEpisodeCount }) => {
           const episodesLength = episodes.length;
 
           return (
@@ -48,7 +48,7 @@ function SeasonCarousel({ seasons }: SeasonCarouselProps) {
                   )
                 }
               />
-              {mediaItem && episodes.length > 0 && (
+              {episodesLength > 0 && (
                 <div className="mt-1.5 flex items-center gap-1.5 px-0.5">
                   <div className="bg-muted h-1 flex-1 overflow-hidden rounded-full">
                     <div
@@ -56,14 +56,14 @@ function SeasonCarousel({ seasons }: SeasonCarouselProps) {
                       style={{
                         width: `${Math.min(
                           100,
-                          (mediaItem.completedEpisodeCount / episodesLength) *
+                          ((completedEpisodeCount ?? 0) / episodesLength) *
                             100,
                         ).toString()}%`,
                       }}
                     />
                   </div>
                   <span className="text-muted-foreground font-mono text-[10px]">
-                    {mediaItem.completedEpisodeCount}/{episodesLength}
+                    {completedEpisodeCount ?? 0}/{episodesLength}
                   </span>
                 </div>
               )}

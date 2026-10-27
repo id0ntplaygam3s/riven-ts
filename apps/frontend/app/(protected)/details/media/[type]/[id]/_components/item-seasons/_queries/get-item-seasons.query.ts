@@ -17,22 +17,20 @@ export const GET_ITEM_SEASONS: TypedDocumentNode<
       seasons {
         id
         title
-        episodes {
-          id
-          number
-          posterUrl
-          title
-        }
-        posterUrl
         number
+        posterUrl
+        completedEpisodeCount
         mediaItem {
           ... on MediaItem {
             isRequested
             state
           }
-          ... on ShowLikeMediaItem {
-            completedEpisodeCount
-          }
+        }
+        episodes {
+          id
+          number
+          posterUrl
+          title
         }
       }
     }
