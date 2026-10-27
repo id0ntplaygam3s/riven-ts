@@ -21,13 +21,15 @@ export interface HeroBannerProps {
   backdropUrl: string | null | undefined;
   logo: ItemImage | null;
   trailer: Trailer | null | undefined;
+  hasStream?: boolean;
+  onPlay?: () => void;
 }
 
 /**
  * Details-page hero with a backdrop and logo that can play the YouTube trailer
  * inline. Renders nothing without a backdrop or trailer.
  */
-export function HeroBanner({ backdropUrl, logo, trailer }: HeroBannerProps) {
+export function HeroBanner({ backdropUrl, logo, trailer, hasStream, onPlay }: HeroBannerProps) {
   const [isTrailerVisible, setIsTrailerVisible] = useState(false);
   const showTrailer = trailer && isTrailerVisible;
 
@@ -90,6 +92,18 @@ export function HeroBanner({ backdropUrl, logo, trailer }: HeroBannerProps) {
             </div>
 
             <div className="flex gap-2 md:gap-4 items-end">
+              {hasStream && onPlay && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="border border-white/10 bg-white/10 px-6 text-sm font-bold text-white shadow-lg backdrop-blur-md transition-all hover:scale-105 hover:bg-white/20"
+                  onClick={onPlay}
+                  type="button"
+                >
+                  <Play size={14} className="mr-2 fill-current" />
+                  Play
+                </Button>
+              )}
               {trailer && (
                 <Button
                   variant="secondary"

@@ -60,6 +60,7 @@
     "es-toolkit": "catalog:",
     "graphql": "catalog:",
     "graphql-ws": "catalog:",
+    "hls.js": "catalog:",
     "lucide-react": "catalog:",
     "luxon": "catalog:",
     "next": "catalog:",

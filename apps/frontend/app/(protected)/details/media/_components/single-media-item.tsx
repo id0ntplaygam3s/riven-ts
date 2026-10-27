@@ -16,9 +16,11 @@ interface SingleMediaItemProps {
     itemRecommendations?: ReactNode;
     similarItems?: ReactNode;
   };
+  hasStream?: boolean;
+  onPlay?: () => void;
 }
 
-export function SingleMediaItem({ indexerData, slots }: SingleMediaItemProps) {
+export function SingleMediaItem({ indexerData, slots, hasStream, onPlay }: SingleMediaItemProps) {
   return (
     <div className="relative flex min-h-screen flex-col overflow-x-clip">
       {indexerData.backdropUrl && (
@@ -40,6 +42,8 @@ export function SingleMediaItem({ indexerData, slots }: SingleMediaItemProps) {
           backdropUrl={indexerData.backdropUrl}
           logo={indexerData.logo ?? null}
           trailer={indexerData.trailer}
+          hasStream={hasStream}
+          onPlay={onPlay}
         />
         <div className="px-8 pb-24 md:px-20 lg:px-24">
           <ItemOverview data={indexerData} />

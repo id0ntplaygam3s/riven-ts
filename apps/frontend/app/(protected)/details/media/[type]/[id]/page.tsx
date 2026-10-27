@@ -7,7 +7,7 @@ import { Skeleton } from "#components/_ui/skeleton.tsx";
 import { query } from "#lib/graphql/client.ts";
 
 import { GET_MEDIA_ITEM } from "./_queries/get-media-item.query.ts";
-import { MediaDetailsPage as MediaDetailsPageClient } from "./page.client.tsx";
+import { MediaDetailsContent } from "./_components/media-details-content.tsx";
 
 async function MediaDetails({
   params,
@@ -33,7 +33,7 @@ async function MediaDetails({
     return notFound();
   }
 
-  return <MediaDetailsPageClient data={data.tmdbItem} />;
+  return <MediaDetailsContent data={data.tmdbItem} />;
 }
 
 function MediaDetailsSkeleton() {
