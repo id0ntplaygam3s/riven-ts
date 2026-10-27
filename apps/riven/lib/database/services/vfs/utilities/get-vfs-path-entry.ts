@@ -1,6 +1,5 @@
 import {
   Episode,
-  MediaEntry,
   Movie,
   Season,
   Show,
@@ -102,40 +101,43 @@ export async function getEntry(em: EntityManager, pathInfo: PathInfo) {
       return null;
     }
     case "single-anime": {
-      if (!pathInfo.tmdbId) {
-        throw new TypeError("Missing tmdbId for anime path");
-      }
-
-      // Try Movie first, then Show — anime can be either type
-      let entry: Movie | Show | null = await em.findOne(Movie, {
-        tmdbId: pathInfo.tmdbId,
-        ...(pathInfo.ext && {
-          filesystemEntries: {
-            path: {
-              $like: `%${pathInfo.base}`,
-            },
-          },
-        }),
-      });
-
-      if (!entry) {
-        entry = await em.findOne(Show, {
-          tmdbId: pathInfo.tmdbId,
-          ...(pathInfo.ext && {
-            filesystemEntries: {
-              path: {
-                $like: `%${pathInfo.base}`,
+      // Anime can be a Movie (tmdbId) or Show (tvdbId)
+      // Try Movie first (anime movies), then Show (anime series)
+      if (pathInfo.tmdbId) {
+        return em.findOneOrFail(
+          Movie,
+          {
+            tmdbId: pathInfo.tmdbId,
+            ...(pathInfo.ext && {
+              filesystemEntries: {
+                path: {
+                  $like: `%${pathInfo.base}`,
+                },
               },
-            },
-          }),
-        });
+            }),
+          },
+          { fields: ["createdAt", "updatedAt", "filesystemEntries.fileSize"] },
+        );
       }
 
-      if (!entry) {
-        throw new TypeError("Anime item not found");
+      if (pathInfo.tvdbId) {
+        return em.findOneOrFail(
+          Show,
+          {
+            tvdbId: pathInfo.tvdbId,
+            ...(pathInfo.ext && {
+              filesystemEntries: {
+                path: {
+                  $like: `%${pathInfo.base}`,
+                },
+              },
+            }),
+          },
+          { fields: ["createdAt", "updatedAt", "filesystemEntries.fileSize"] },
+        );
       }
 
-      return entry;
+      throw new TypeError("Missing tmdbId or tvdbId for anime path");
     }
     case "anime-seasons": {
       if (!pathInfo.tvdbId) {
