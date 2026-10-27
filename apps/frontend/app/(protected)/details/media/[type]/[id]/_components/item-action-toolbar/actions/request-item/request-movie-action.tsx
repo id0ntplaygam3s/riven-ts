@@ -1,11 +1,11 @@
 "use client";
 
-import { useAction } from "next-safe-action/hooks";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { BaseItemAction } from "../_components/base-item-action";
 import { useActionDialog } from "../_hooks/use-action-dialog";
-import { requestItem } from "./_actions/request-item.action";
+import { requestItemClient } from "./_actions/request-item-client";
 import { TriggerButton } from "./_components/trigger-button";
 
 import type { BaseItemActionProps } from "../_components/base-item-action";
@@ -19,6 +19,8 @@ export function RequestMovieAction({
   title,
   externalIds,
 }: RequestMovieActionProps) {
+  const [isExecuting, setIsExecuting] = useState(false);
+
   const { isOpen, setIsOpen, callbacks } = useActionDialog({
     onSuccess() {
       toast.success("Request successful!");
@@ -28,20 +30,29 @@ export function RequestMovieAction({
     },
   });
 
-  const { execute, isExecuting } = useAction(
-    requestItem.bind(null, externalIds),
-    callbacks,
-  );
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setIsExecuting(true);
+
+    try {
+      const result = await requestItemClient(externalIds);
+      if (result.success) {
+        callbacks.onSuccess?.();
+        setIsOpen(false);
+      } else {
+        callbacks.onError?.();
+      }
+    } finally {
+      setIsExecuting(false);
+    }
+  };
 
   return (
     <BaseItemAction
       open={isOpen}
       onOpenChange={setIsOpen}
       isExecuting={isExecuting}
-      onSubmit={(event) => {
-        event.preventDefault();
-        execute({});
-      }}
+      onSubmit={handleSubmit}
       title={`Requesting "${title}"`}
       description="This will send a request to Riven to add this media."
       slots={{

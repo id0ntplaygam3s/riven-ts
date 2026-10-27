@@ -1,18 +1,25 @@
-import { ApolloClient, InMemoryCache, split, type ApolloClient as ApolloClientType } from "@apollo/client";
+import {
+  ApolloClient,
+  InMemoryCache,
+  split,
+  type ApolloClient as ApolloClientType,
+} from "@apollo/client";
 import { HttpLink } from "@apollo/client";
 import { setContext } from "@apollo/client/link/context";
-import { getMainDefinition } from "@apollo/client/utilities";
 import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
+import { getMainDefinition } from "@apollo/client/utilities";
 import { createClient } from "graphql-ws";
 
 import { privateEnvironment } from "#environment/private-environment.schema.ts";
 
 function createApolloClient(): ApolloClientType {
   const baseUrl = privateEnvironment.BACKEND_URL;
-  const wsUrl = baseUrl.replace("http://", "ws://").replace("https://", "wss://");
+  const wsUrl = baseUrl
+    .replace("http://", "ws://")
+    .replace("https://", "wss://");
   const apiKey = privateEnvironment.GRAPHQL_API_KEY;
 
-  // SSR (Node.js) needs absolute URL; browser uses relative proxy route
+  // SSR (Node.js) needs absolute Docker-internal URL; browser uses relative proxy route
   const isBrowser = typeof window !== "undefined";
   const httpUri = isBrowser ? "/api/graphql" : `${baseUrl}/graphql`;
 
@@ -28,10 +35,22 @@ function createApolloClient(): ApolloClientType {
     },
   }));
 
-  // WebSocket link uses the backend URL directly (server-to-server)
+  // WebSocket: browser connects directly to backend's public port
+  // SSR uses Docker internal URL (server-to-server)
+  let wsEndpoint: string;
+  if (isBrowser) {
+    // Backend public WebSocket URL: ws://<public-host>:<backend-host-port>/graphql
+    // e.g., ws://dulkoan-server.tailc37119.ts.net:8080/graphql
+    const backendPublicUrl =
+      privateEnvironment.BACKEND_PUBLIC_WS_URL || "ws://localhost:8080";
+    wsEndpoint = `${backendPublicUrl}/graphql`;
+  } else {
+    wsEndpoint = `${wsUrl}/graphql`;
+  }
+
   const wsLink = new GraphQLWsLink(
     createClient({
-      url: `${wsUrl}/graphql`,
+      url: wsEndpoint,
       connectionParams: {
         ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
       },
@@ -81,7 +100,9 @@ export function getClient(): ApolloClientType {
   return clientInstance;
 }
 
-export async function query<T>(options: Parameters<ApolloClientType["query"]>[0]): Promise<Awaited<ReturnType<ApolloClientType["query"]>>> {
+export async function query<T>(
+  options: Parameters<ApolloClientType["query"]>[0],
+): Promise<Awaited<ReturnType<ApolloClientType["query"]>>> {
   return getClient().query(options);
 }
 

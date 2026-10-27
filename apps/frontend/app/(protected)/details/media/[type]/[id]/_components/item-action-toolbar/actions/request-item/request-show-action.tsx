@@ -1,13 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks";
-import { FormProvider } from "react-hook-form";
+import { useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { BaseItemAction } from "../_components/base-item-action";
 import { useActionDialog } from "../_hooks/use-action-dialog";
-import { requestItem } from "./_actions/request-item.action";
+import { requestItemClient } from "./_actions/request-item-client";
 import { SeasonSelector } from "./_components/season-selector";
 import { TriggerButton } from "./_components/trigger-button";
 import { RequestShowFormSchema } from "./_schemas/request-show.form-schema";
@@ -28,6 +28,8 @@ export function RequestShowAction({
   seasons,
   requestedSeasons,
 }: RequestShowActionProps) {
+  const [isExecuting, setIsExecuting] = useState(false);
+
   const { isOpen, setIsOpen, callbacks } = useActionDialog({
     onSuccess() {
       toast.success("Request successful!");
@@ -37,23 +39,38 @@ export function RequestShowAction({
     },
   });
 
-  const { action, form, handleSubmitWithAction } = useHookFormAction(
-    requestItem.bind(null, externalIds),
-    zodResolver(RequestShowFormSchema),
-    {
-      formProps: {
-        defaultValues: {
-          requestedSeasons: Object.fromEntries(
-            [...requestedSeasons.values()].map((seasonNumber) => [
-              seasonNumber.toString(),
-              true,
-            ]),
-          ),
-        },
-      },
-      actionProps: callbacks,
+  const form = useForm({
+    resolver: zodResolver(RequestShowFormSchema),
+    defaultValues: {
+      requestedSeasons: Object.fromEntries(
+        [...requestedSeasons.values()].map((seasonNumber) => [
+          seasonNumber.toString(),
+          true,
+        ]),
+      ),
     },
-  );
+  });
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const values = form.getValues();
+    setIsExecuting(true);
+
+    try {
+      const result = await requestItemClient(
+        externalIds,
+        values.requestedSeasons,
+      );
+      if (result.success) {
+        callbacks.onSuccess?.();
+        setIsOpen(false);
+      } else {
+        callbacks.onError?.();
+      }
+    } finally {
+      setIsExecuting(false);
+    }
+  };
 
   return (
     <BaseItemAction
@@ -65,8 +82,8 @@ export function RequestShowAction({
 
         setIsOpen(open);
       }}
-      isExecuting={action.isExecuting}
-      onSubmit={(event) => void handleSubmitWithAction(event)}
+      isExecuting={isExecuting}
+      onSubmit={handleSubmit}
       title={`Requesting "${title}"`}
       description="This will send a request to Riven to add this media."
       slots={{
