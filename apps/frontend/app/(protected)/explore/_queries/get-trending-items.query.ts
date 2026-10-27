@@ -21,8 +21,10 @@ export const GET_TRENDING_ITEMS: TypedDocumentNode<
       year
       voteAverage
       mediaItem {
-        id
-        state
+        ... on MediaItem {
+          id
+          state
+        }
       }
     }
     tmdbTrendingShows(timeWindow: $timeWindow) {
@@ -35,8 +37,10 @@ export const GET_TRENDING_ITEMS: TypedDocumentNode<
       year
       voteAverage
       mediaItem {
-        id
-        state
+        ... on MediaItem {
+          id
+          state
+        }
       }
     }
   }

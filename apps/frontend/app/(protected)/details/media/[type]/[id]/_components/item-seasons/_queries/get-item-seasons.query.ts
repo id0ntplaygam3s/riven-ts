@@ -26,9 +26,13 @@ export const GET_ITEM_SEASONS: TypedDocumentNode<
         posterUrl
         number
         mediaItem {
-          isRequested
-          state
-          completedEpisodeCount
+          ... on MediaItem {
+            isRequested
+            state
+          }
+          ... on ShowLikeMediaItem {
+            completedEpisodeCount
+          }
         }
       }
     }

@@ -119,9 +119,13 @@ export const authConfig = {
   trustedOrigins: [
     "http://localhost:9000",
     "https://localhost:9000",
+    "http://192.168.0.*:9000",
+    "https://192.168.0.*:9000",
     "http://192.168.1.*:9000",
     "https://192.168.1.*:9000",
-    frontendSettings.origin,
+    "http://dulkoan-server.tailc37119.ts.net:3001",
+    "https://dulkoan-server.tailc37119.ts.net:3001",
+    ...(frontendSettings.origin ? [frontendSettings.origin] : []),
   ],
   advanced: {
     cookiePrefix: "riven",
