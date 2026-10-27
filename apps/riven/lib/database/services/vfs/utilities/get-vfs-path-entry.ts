@@ -1,8 +1,10 @@
 import {
   Episode,
+  MediaEntry,
   Movie,
   Season,
   Show,
+  SubtitleEntry,
 } from "@repo/util-plugin-sdk/dto/entities";
 
 import { getVfsSubtitleEntry } from "./get-vfs-subtitle-entry.ts";
@@ -96,8 +98,105 @@ export async function getEntry(em: EntityManager, pathInfo: PathInfo) {
         { fields: ["createdAt", "updatedAt"] },
       );
     }
+    case "all-anime": {
+      return null;
+    }
+    case "single-anime": {
+      if (!pathInfo.tmdbId) {
+        throw new TypeError("Missing tmdbId for anime path");
+      }
+
+      // Try Movie first, then Show — anime can be either type
+      let entry: Movie | Show | null = await em.findOne(Movie, {
+        tmdbId: pathInfo.tmdbId,
+        ...(pathInfo.ext && {
+          filesystemEntries: {
+            path: {
+              $like: `%${pathInfo.base}`,
+            },
+          },
+        }),
+      });
+
+      if (!entry) {
+        entry = await em.findOne(Show, {
+          tmdbId: pathInfo.tmdbId,
+          ...(pathInfo.ext && {
+            filesystemEntries: {
+              path: {
+                $like: `%${pathInfo.base}`,
+              },
+            },
+          }),
+        });
+      }
+
+      if (!entry) {
+        throw new TypeError("Anime item not found");
+      }
+
+      return entry;
+    }
+    case "anime-seasons": {
+      if (!pathInfo.tvdbId) {
+        throw new TypeError("Missing tvdbId for anime seasons path");
+      }
+
+      return em.findOneOrFail(
+        Show,
+        { tvdbId: pathInfo.tvdbId },
+        { fields: ["createdAt", "updatedAt"] },
+      );
+    }
+    case "anime-season-episodes": {
+      if (!pathInfo.tvdbId || !pathInfo.season) {
+        throw new TypeError(
+          "Missing tvdbId or season for anime season episodes path",
+        );
+      }
+
+      return em.findOneOrFail(
+        Season,
+        {
+          show: {
+            tvdbId: pathInfo.tvdbId,
+          },
+          number: pathInfo.season,
+        },
+        { fields: ["createdAt", "updatedAt"] },
+      );
+    }
+    case "single-anime-episode": {
+      if (!pathInfo.tvdbId || !pathInfo.season || !pathInfo.episode) {
+        throw new TypeError(
+          "Missing tvdbId, season, or episode for anime episode path",
+        );
+      }
+
+      return em.findOneOrFail(
+        Episode,
+        {
+          season: {
+            number: pathInfo.season,
+            show: {
+              tvdbId: pathInfo.tvdbId,
+            },
+          },
+          number: pathInfo.episode,
+          filesystemEntries: {
+            path: {
+              $like: `%${pathInfo.base}`,
+            },
+          },
+        },
+        { fields: ["createdAt", "updatedAt", "filesystemEntries.fileSize"] },
+      );
+    }
     case "all-movies":
     case "all-shows": {
+      return null;
+    }
+    default: {
       return null;
     }
   }

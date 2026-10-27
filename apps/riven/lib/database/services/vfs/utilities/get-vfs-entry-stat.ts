@@ -224,6 +224,9 @@ export async function getVfsEntryStat(em: EntityManager, path: string) {
       return entryStat;
     }
     case "/anime": {
+      // Note: isAnime is a computed property (not persisted), so we query
+      // all shows with episodes as a proxy. Actual anime filtering happens
+      // at the GraphQL layer via the isAnime computed getter.
       const totalAnimeQuery = em.count(Show, {
         seasons: {
           episodes: {
@@ -237,7 +240,6 @@ export async function getVfsEntryStat(em: EntityManager, path: string) {
             },
           },
         },
-        isAnime: true,
       });
 
       const oldestAnimeQuery = em.findOne(
@@ -246,7 +248,6 @@ export async function getVfsEntryStat(em: EntityManager, path: string) {
           type: "media",
           mediaItem: {
             type: "episode",
-            isAnime: true,
           },
         },
         {
@@ -263,7 +264,6 @@ export async function getVfsEntryStat(em: EntityManager, path: string) {
           type: "media",
           mediaItem: {
             type: "episode",
-            isAnime: true,
           },
         },
         {
