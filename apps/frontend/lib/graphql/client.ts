@@ -12,9 +12,12 @@ function createApolloClient(): ApolloClientType {
   const wsUrl = baseUrl.replace("http://", "ws://").replace("https://", "wss://");
   const apiKey = privateEnvironment.GRAPHQL_API_KEY;
 
-  // Use relative URL to proxy through Next.js API route (avoids CORS and localhost issues)
+  // SSR (Node.js) needs absolute URL; browser uses relative proxy route
+  const isBrowser = typeof window !== "undefined";
+  const httpUri = isBrowser ? "/api/graphql" : `${baseUrl}/graphql`;
+
   const httpLink = new HttpLink({
-    uri: "/api/graphql",
+    uri: httpUri,
   });
 
   // Add auth header to HTTP requests
@@ -28,7 +31,7 @@ function createApolloClient(): ApolloClientType {
   // WebSocket link uses the backend URL directly (server-to-server)
   const wsLink = new GraphQLWsLink(
     createClient({
-      url: `${wsUrl.replace("http://", "ws://").replace("https://", "wss://")}/graphql`,
+      url: `${wsUrl}/graphql`,
       connectionParams: {
         ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
       },
