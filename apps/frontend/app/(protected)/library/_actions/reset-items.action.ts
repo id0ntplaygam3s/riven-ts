@@ -6,7 +6,11 @@ import { getClient } from "#lib/graphql/client.ts";
 import { permissionActionClient } from "#lib/server-actions/action-client.ts";
 import { ItemPermission } from "@repo/util-auth/access-control";
 
-import { RESET_MEDIA_ITEM } from "../_queries/media-actions.query";
+const RESET_MEDIA_ITEM = `
+  mutation ResetMediaItem($mediaItemId: ID!) {
+    resetMediaItem(mediaItemId: $mediaItemId)
+  }
+`;
 
 export const resetItems = permissionActionClient
   .meta({

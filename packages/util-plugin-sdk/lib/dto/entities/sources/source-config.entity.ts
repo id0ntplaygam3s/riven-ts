@@ -1,15 +1,6 @@
-import { Entity, PrimaryKey, Property, Enum, OneToMany, Collection } from "@mikro-orm/decorators/legacy";
+import { Entity, PrimaryKey, Property } from "@mikro-orm/decorators/legacy";
 import { Field, ID, ObjectType } from "type-graphql";
 import { JSONObjectResolver } from "graphql-scalars";
-
-import type { EntityManager } from "@mikro-orm/core";
-
-export enum SourceType {
-  TMDB = "tmdb",
-  TVDB = "tvdb",
-  CUSTOM = "custom",
-  DEBRID = "debrid",
-}
 
 @ObjectType()
 @Entity()
@@ -22,12 +13,12 @@ export class SourceConfig {
   @Property()
   public name!: string;
 
-  @Field(() => SourceType)
-  @Enum()
-  public type!: SourceType;
+  @Field(() => String)
+  @Property({ type: "string" })
+  public type!: string;
 
-  @Field(() => Boolean, { defaultValue: true })
-  @Property({ defaultValue: true })
+  @Field(() => Boolean)
+  @Property({ default: true })
   public enabled!: boolean;
 
   @Field(() => JSONObjectResolver, { nullable: true })
@@ -46,8 +37,8 @@ export class SourceConfig {
   @Property({ nullable: true })
   public baseUrl?: string | null;
 
-  @Field(() => Number, { defaultValue: 0 })
-  @Property({ defaultValue: 0 })
+  @Field(() => Number)
+  @Property({ default: 0 })
   public priority!: number;
 
   @Field(() => Date)
@@ -60,8 +51,8 @@ export class SourceConfig {
 
   // Helper to get the effective base URL
   public getEffectiveBaseUrl(): string | null {
-    if (this.type === SourceType.TMDB) return "https://api.themoviedb.org/3";
-    if (this.type === SourceType.TVDB) return "https://api.thetvdb.com/v4";
+    if (this.type === "tmdb") return "https://api.themoviedb.org/3";
+    if (this.type === "tvdb") return "https://api.thetvdb.com/v4";
     return this.baseUrl ?? null;
   }
 }

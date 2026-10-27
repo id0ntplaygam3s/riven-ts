@@ -104,6 +104,7 @@
     "lru-cache": "catalog:",
     "luxon": "catalog:",
     "msw": "catalog:",
+    "nanoid": "catalog:",
     "reflect-metadata": "catalog:",
     "rxjs": "catalog:",
     "triple-beam": "catalog:",

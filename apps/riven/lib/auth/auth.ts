@@ -27,69 +27,6 @@ import type { MikroORM } from "@mikro-orm/core";
 import type { Auth, BetterAuthOptions, LogLevel } from "better-auth";
 import type { AdapterFactory } from "better-auth/adapters";
 
-/**
- * Hook that promotes the first registered user to admin role.
- * This ensures the initial setup user has full admin access.
- */
-const isFirstUserAdminHook = {
-  hooks: {
-    after: [
-      {
-        matcher() {
-          return true;
-        },
-        handler: async (event) => {
-          // Only trigger on successful user sign up
-          if (
-            event.context.action !== "create-user" ||
-            event.context.httpRequest?.method !== "POST"
-          ) {
-            return;
-          }
-
-          // Check if this is the first user by counting existing users
-          const db = event.context.adapter;
-          if (!db) return;
-
-          try {
-            // Use the database to count users
-            const countResult = await db
-              .find({
-                table: "user",
-                where: [],
-                orderBy: [],
-              })
-              .then((r: unknown[]) => r.length);
-
-            if (countResult === 1) {
-              // This is the first user — set their role to admin
-              const userId = event.context.data?.id as string;
-              if (userId) {
-                await db
-                  .update({
-                    table: "user",
-                    where: [
-                      {
-                        field: "id",
-                        value: userId,
-                      },
-                    ],
-                    data: {
-                      role: "admin",
-                    },
-                  })
-                  .catch(() => {});
-              }
-            }
-          } catch {
-            // Silently fail — don't block user creation
-          }
-        },
-      },
-    ],
-  },
-};
-
 const transformLogLevel = (): Exclude<LogLevel, "success"> => {
   switch (settings.logLevel) {
     case "silly":
@@ -127,9 +64,6 @@ export const authConfig = {
     deleteUser: {
       enabled: true,
     },
-  },
-  hooks: {
-    after: isFirstUserAdminHook.hooks.after,
   },
   plugins: [
     username(),
@@ -218,5 +152,38 @@ export function initAuth(orm: MikroORM): typeof auth {
     database: mikroOrmAdapter(orm),
   });
 
+  // Promote first registered user to admin
+  promoteFirstUserToAdmin(orm);
+
   return auth;
+}
+
+/**
+ * Promotes the first registered user to admin role.
+ * This ensures the initial setup user has full admin access.
+ */
+async function promoteFirstUserToAdmin(orm: MikroORM): Promise<void> {
+  try {
+    const em = orm.em.fork();
+    const users = await em.find(
+      // @ts-expect-error User entity type resolved at runtime
+      "User",
+      {},
+      { orderBy: { createdAt: "asc" }, limit: 1 },
+    );
+
+    if (users.length > 0) {
+      const firstUser = users[0];
+      // @ts-expect-error role property resolved at runtime
+      if (!firstUser.role || firstUser.role === "user") {
+        // @ts-expect-error role property resolved at runtime
+        firstUser.role = "admin";
+        await em.flush();
+        logger.info("First user promoted to admin role");
+      }
+    }
+  } catch (error) {
+    // Silently fail — don't block auth initialization
+    logger.debug("First-user admin promotion skipped", { err: error });
+  }
 }

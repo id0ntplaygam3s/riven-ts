@@ -22,12 +22,10 @@ import {
   Arg,
   Args,
   Ctx,
-  Field,
   FieldResolver,
   ID,
   Int,
   Mutation,
-  ObjectType,
   Query,
   Resolver,
   Root,
@@ -190,10 +188,10 @@ export class MediaItemResolver {
   public async removeMediaItem(
     @Arg("mediaItemId", () => ID) mediaItemId: UUID,
     @CoreContext() {
-      services: { mediaItemService, streamService, filesystemEntryService },
+      services: { mediaItemService },
       em,
     }: CoreContext,
-    @Ctx() { sendEvent, logger }: ApolloServerContext,
+    @Ctx() { logger }: ApolloServerContext,
   ): Promise<boolean> {
     const item = await mediaItemService.getMediaItemById(mediaItemId);
 
@@ -229,11 +227,6 @@ export class MediaItemResolver {
       `Removed ${chalk.bold(fullTitle)} (${itemType}) from the database.`,
     );
 
-    sendEvent({
-      type: "riven.media-item.removed",
-      item: { id: mediaItemId, type: itemType, fullTitle },
-    });
-
     return true;
   }
 
@@ -265,10 +258,10 @@ export class MediaItemResolver {
     @Arg("mediaItemId", () => ID) mediaItemId: UUID,
     @Arg("infoHash", () => String) infoHash: string,
     @CoreContext() {
-      services: { mediaItemService, streamService },
+      services: { mediaItemService },
       em,
     }: CoreContext,
-    @Ctx() { sendEvent, logger }: ApolloServerContext,
+    @Ctx() { logger }: ApolloServerContext,
   ): Promise<boolean> {
     const item = await mediaItemService.getMediaItemById(mediaItemId);
 
@@ -296,17 +289,17 @@ export class MediaItemResolver {
     const stream = em.create(Stream, {
       infoHash,
       parsedData: {
-        source: "manual",
-        quality: "unknown",
-        resolution: "unknown",
-        size: 0,
-        seeders: 0,
-        leechers: 0,
+        rawTitle: `Manual: ${infoHash}`,
         title: `Manual: ${infoHash}`,
-        language: "unknown",
-        provider: "manual",
-        plugin: "manual",
-        publishedAt: DateTime.utc().toJSDate(),
+        resolution: "unknown",
+        size: "0",
+        seasons: [],
+        episodes: [],
+        languages: [],
+        type: "movie",
+        converted: false,
+        remux: false,
+        normalisedTitle: `manual-${infoHash}`,
       },
     });
 
@@ -335,12 +328,6 @@ export class MediaItemResolver {
     logger.info(
       `Manually added stream ${chalk.bold(infoHash)} to ${chalk.bold(item.fullTitle)}.`,
     );
-
-    sendEvent({
-      type: "riven.media-item.manual-scrape",
-      item,
-      infoHash,
-    });
 
     return true;
   }

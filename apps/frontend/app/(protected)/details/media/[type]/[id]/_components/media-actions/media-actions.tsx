@@ -17,16 +17,54 @@ import {
 import { Button } from "#components/ui/button";
 import * as Dialog from "#components/ui/dialog";
 import { getClient } from "#lib/graphql/client.ts";
-import {
-  REQUEST_ITEM,
-  RESET_MEDIA_ITEM,
-  RETRY_MEDIA_ITEM,
-  REMOVE_MEDIA_ITEM,
-  MANUAL_SCRAPE,
-  PAUSE_MEDIA_ITEM,
-  RESUME_MEDIA_ITEM,
-  BLACKLIST_ACTIVE_STREAM,
-} from "../_queries/media-actions.query";
+
+const REQUEST_ITEM = `
+  mutation RequestItem($input: RequestItemInput!) {
+    requestItem(input: $input)
+  }
+`;
+
+const RESET_MEDIA_ITEM = `
+  mutation ResetMediaItem($mediaItemId: ID!) {
+    resetMediaItem(mediaItemId: $mediaItemId)
+  }
+`;
+
+const RETRY_MEDIA_ITEM = `
+  mutation RetryMediaItem($mediaItemId: ID!) {
+    retryMediaItem(mediaItemId: $mediaItemId)
+  }
+`;
+
+const REMOVE_MEDIA_ITEM = `
+  mutation RemoveMediaItem($mediaItemId: ID!) {
+    removeMediaItem(mediaItemId: $mediaItemId)
+  }
+`;
+
+const MANUAL_SCRAPE = `
+  mutation ManualScrape($mediaItemId: ID!, $infoHash: String!) {
+    manualScrape(mediaItemId: $mediaItemId, infoHash: $infoHash)
+  }
+`;
+
+const PAUSE_MEDIA_ITEM = `
+  mutation PauseMediaItem($mediaItemId: ID!) {
+    pauseMediaItem(mediaItemId: $mediaItemId)
+  }
+`;
+
+const RESUME_MEDIA_ITEM = `
+  mutation ResumeMediaItem($mediaItemId: ID!) {
+    resumeMediaItem(mediaItemId: $mediaItemId)
+  }
+`;
+
+const BLACKLIST_ACTIVE_STREAM = `
+  mutation BlacklistActiveStream($mediaItemId: ID!) {
+    blacklistActiveStream(mediaItemId: $mediaItemId)
+  }
+`;
 import type { MediaItemState } from "@repo/util-plugin-sdk/dto/enums/media-item-state.enum";
 
 interface MediaActionsProps {

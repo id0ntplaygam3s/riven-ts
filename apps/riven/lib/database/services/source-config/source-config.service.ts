@@ -1,4 +1,5 @@
-import { SourceConfig, SourceType } from "@repo/util-plugin-sdk/dto/entities";
+import { SourceConfig } from "@repo/util-plugin-sdk/dto/entities";
+import { SourceType } from "@repo/util-plugin-sdk/dto/enums/source-type.enum";
 
 import {
   CreateRequestContext,
@@ -6,8 +7,6 @@ import {
 } from "@mikro-orm/decorators/legacy";
 
 import { BaseService } from "#database/services/core/base-service.ts";
-
-import type { UUID } from "node:crypto";
 
 export class SourceConfigService extends BaseService {
   @CreateRequestContext()
@@ -40,12 +39,16 @@ export class SourceConfigService extends BaseService {
     apiKey?: string | null;
     baseUrl?: string | null;
     priority?: number;
+    enabled?: boolean;
   }): Promise<SourceConfig> {
     const { nanoid } = await import("nanoid");
 
     const sourceConfig = this.em.create(SourceConfig, {
       id: nanoid(21),
       ...input,
+      description: input.description ?? null,
+      apiKey: input.apiKey ?? null,
+      baseUrl: input.baseUrl ?? null,
       enabled: input.enabled ?? true,
       priority: input.priority ?? 0,
       createdAt: new Date(),
@@ -60,16 +63,16 @@ export class SourceConfigService extends BaseService {
   @CreateRequestContext()
   public async updateSourceConfig(
     id: string,
-    input: Partial<{
-      name: string;
-      type: SourceType;
-      config: Record<string, unknown>;
-      description: string | null;
-      apiKey: string | null;
-      baseUrl: string | null;
-      priority: number;
-      enabled: boolean;
-    }>,
+    input: {
+      name?: string;
+      type?: SourceType;
+      config?: Record<string, unknown>;
+      description?: string | null;
+      apiKey?: string | null;
+      baseUrl?: string | null;
+      priority?: number;
+      enabled?: boolean;
+    },
   ): Promise<SourceConfig | null> {
     const sourceConfig = await this.em.findOne(SourceConfig, { id });
     if (!sourceConfig) return null;

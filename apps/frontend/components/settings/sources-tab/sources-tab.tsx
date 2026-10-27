@@ -24,7 +24,7 @@ import {
   UPDATE_SOURCE_CONFIG,
   DELETE_SOURCE_CONFIG,
   TOGGLE_SOURCE_CONFIG,
-} from "#app/(protected)/settings/_queries/source-config.query";
+} from "#app/(protected)/settings/_queries/source-config.query.ts";
 
 import type { SourceConfig } from "#app/_types/__generated__/graphql.ts";
 

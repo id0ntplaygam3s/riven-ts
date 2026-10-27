@@ -1,8 +1,8 @@
-import { SourceConfig, SourceType } from "@repo/util-plugin-sdk/dto/entities";
+import { SourceConfig } from "@repo/util-plugin-sdk/dto/entities";
 
 import {
   Arg,
-  ArgsType,
+  Ctx,
   Field,
   Mutation,
   ObjectType,
@@ -14,6 +14,19 @@ import { CoreContext } from "#graphql/decorators/core-context.ts";
 
 import type { ApolloServerContext } from "#graphql/context.ts";
 
+/** Allowed source type string values. */
+const ALLOWED_SOURCE_TYPES = ["tmdb", "tvdb", "custom", "debrid"] as const;
+type AllowedSourceType = (typeof ALLOWED_SOURCE_TYPES)[number];
+
+/** Validate that a string is a valid source type value. */
+function assertValidSourceType(value: unknown): asserts value is AllowedSourceType {
+  if (!(ALLOWED_SOURCE_TYPES as readonly string[]).includes(value as string)) {
+    throw new Error(
+      `Invalid source type: "${value}". Must be one of: ${ALLOWED_SOURCE_TYPES.join(", ")}`,
+    );
+  }
+}
+
 @ObjectType()
 class SourceConfigCreateResponse {
   @Field(() => Boolean)
@@ -24,51 +37,6 @@ class SourceConfigCreateResponse {
 
   @Field(() => String, { nullable: true })
   public message?: string | null;
-}
-
-@ArgsType()
-class CreateSourceConfigInput {
-  @Field()
-  public name!: string;
-
-  @Field(() => SourceType)
-  public type!: SourceType;
-
-  @Field(() => String, { nullable: true })
-  public description?: string | null;
-
-  @Field(() => String, { nullable: true })
-  public apiKey?: string | null;
-
-  @Field(() => String, { nullable: true })
-  public baseUrl?: string | null;
-
-  @Field(() => Number, { nullable: true })
-  public priority?: number;
-}
-
-@ArgsType()
-class UpdateSourceConfigInput {
-  @Field(() => String, { nullable: true })
-  public name?: string;
-
-  @Field(() => SourceType, { nullable: true })
-  public type?: SourceType;
-
-  @Field(() => String, { nullable: true })
-  public description?: string | null;
-
-  @Field(() => String, { nullable: true })
-  public apiKey?: string | null;
-
-  @Field(() => String, { nullable: true })
-  public baseUrl?: string | null;
-
-  @Field(() => Number, { nullable: true })
-  public priority?: number;
-
-  @Field(() => Boolean, { nullable: true })
-  public enabled?: boolean;
 }
 
 @Resolver(() => SourceConfig)
@@ -95,28 +63,36 @@ export class SourceConfigResolver {
     description: "Get source configurations filtered by type.",
   })
   public async getSourceConfigsByType(
-    @Arg("type", () => SourceType) type: SourceType,
+    @Arg("type", () => String) type: string,
     @CoreContext() { services: { sourceConfigService } }: CoreContext,
   ) {
-    return sourceConfigService.getSourceConfigsByType(type);
+    assertValidSourceType(type);
+    return sourceConfigService.getSourceConfigsByType(type as AllowedSourceType);
   }
 
   @Mutation(() => SourceConfigCreateResponse, {
     description: "Create a new source configuration.",
   })
   public async createSourceConfig(
-    @Arg("input") input: CreateSourceConfigInput,
+    @Arg("name", () => String) name: string,
+    @Arg("type", () => String) type: string,
+    @Arg("description", () => String, { nullable: true, defaultValue: null }) description: string | null,
+    @Arg("apiKey", () => String, { nullable: true, defaultValue: null }) apiKey: string | null,
+    @Arg("baseUrl", () => String, { nullable: true, defaultValue: null }) baseUrl: string | null,
+    @Arg("priority", () => Number, { nullable: true, defaultValue: 0 }) priority: number,
     @CoreContext() { services: { sourceConfigService } }: CoreContext,
     @Ctx() { logger }: ApolloServerContext,
   ) {
     try {
+      assertValidSourceType(type);
+
       const source = await sourceConfigService.createSourceConfig({
-        name: input.name,
-        type: input.type,
-        description: input.description,
-        apiKey: input.apiKey,
-        baseUrl: input.baseUrl,
-        priority: input.priority ?? 0,
+        name,
+        type: type as AllowedSourceType,
+        description,
+        apiKey,
+        baseUrl,
+        priority,
       });
 
       logger.info(`Created source configuration: ${source.name}`);
@@ -134,10 +110,39 @@ export class SourceConfigResolver {
   })
   public async updateSourceConfig(
     @Arg("id") id: string,
-    @Arg("input") input: UpdateSourceConfigInput,
+    @Arg("name", () => String, { nullable: true, defaultValue: undefined }) name: string | undefined,
+    @Arg("type", () => String, { nullable: true, defaultValue: undefined }) type: string | undefined,
+    @Arg("description", () => String, { nullable: true, defaultValue: undefined }) description: string | null | undefined,
+    @Arg("apiKey", () => String, { nullable: true, defaultValue: undefined }) apiKey: string | null | undefined,
+    @Arg("baseUrl", () => String, { nullable: true, defaultValue: undefined }) baseUrl: string | null | undefined,
+    @Arg("priority", () => Number, { nullable: true, defaultValue: undefined }) priority: number | undefined,
+    @Arg("enabled", () => Boolean, { nullable: true, defaultValue: undefined }) enabled: boolean | undefined,
     @CoreContext() { services: { sourceConfigService } }: CoreContext,
     @Ctx() { logger }: ApolloServerContext,
   ) {
+    if (type !== undefined) {
+      assertValidSourceType(type);
+    }
+
+    // Build partial input, only including defined values
+    const input: {
+      name?: string;
+      type?: AllowedSourceType;
+      description?: string | null;
+      apiKey?: string | null;
+      baseUrl?: string | null;
+      priority?: number;
+      enabled?: boolean;
+    } = {};
+
+    if (name !== undefined) input.name = name;
+    if (type !== undefined) input.type = type as AllowedSourceType;
+    if (description !== undefined) input.description = description;
+    if (apiKey !== undefined) input.apiKey = apiKey;
+    if (baseUrl !== undefined) input.baseUrl = baseUrl;
+    if (priority !== undefined) input.priority = priority;
+    if (enabled !== undefined) input.enabled = enabled;
+
     const source = await sourceConfigService.updateSourceConfig(id, input);
     if (!source) {
       throw new Error(`Source configuration with ID ${id} not found`);
