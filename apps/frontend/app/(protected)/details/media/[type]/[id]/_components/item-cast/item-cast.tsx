@@ -1,4 +1,4 @@
-import { cn } from "cn";
+import Link from "next/link";
 import { cacheLife } from "next/cache";
 import { headers } from "next/headers";
 import { Suspense } from "react";
@@ -15,6 +15,7 @@ import { SectionHeading } from "#components/media/section-heading/section-headin
 import { PortraitCard } from "#components/portrait-card/portrait-card.tsx";
 import { query } from "#lib/graphql/client.ts";
 import { resolveLocale } from "#lib/utils/resolve-locale.ts";
+import { cn } from "cn";
 
 import { GET_ITEM_CAST } from "./_queries/get-item-cast.query";
 
@@ -33,12 +34,17 @@ function CastMemberCarousel({ cast }: CastMemberCarouselProps) {
       <CarouselContent className="-ml-3">
         {cast.map((member) => (
           <CarouselItem key={member.id} className="basis-auto pl-3">
-            <PortraitCard
-              title={member.name}
-              subtitle={member.character}
-              image={member.profileUrl}
-              className="w-32 md:w-36 lg:w-40"
-            />
+            <Link
+              href={`/details/person/${member.id}`}
+              className="group relative block opacity-80 transition-all duration-300 hover:opacity-100"
+            >
+              <PortraitCard
+                title={member.name}
+                subtitle={member.character}
+                image={member.profileUrl}
+                className="w-32 md:w-36 lg:w-40"
+              />
+            </Link>
           </CarouselItem>
         ))}
       </CarouselContent>

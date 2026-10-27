@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { SectionHeading } from "#components/media/section-heading/section-heading.tsx";
 import { formatCurrency } from "#lib/utils/format-currency.ts";
 
@@ -103,13 +105,14 @@ export function MoreDetailsPanel({
                 );
 
                 return (
-                  <span
+                  <Link
                     key={company.id}
-                    className="text-muted-foreground rounded border border-white/10 bg-white/5 px-2 py-1 text-xs"
+                    href={`/details/company/${company.id}`}
+                    className="text-muted-foreground hover:text-foreground rounded border border-white/10 bg-white/5 px-2 py-1 text-xs transition-colors hover:bg-white/10"
                   >
                     {company.name}{" "}
                     {isDuplicated && `[${company.originCountry}]`}
-                  </span>
+                  </Link>
                 );
               })}
             </div>

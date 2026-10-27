@@ -6,6 +6,7 @@ import { RecentlyAdded } from "./_components/recently-added.tsx";
 import { TMDBNowPlaying } from "./_components/tmdb-now-playing/tmdb-now-playing.tsx";
 import { TMDBTrendingMovies } from "./_components/tmdb-trending-movies/tmdb-trending-movies.tsx";
 import { TMDBTrendingShows } from "./_components/tmdb-trending-shows/tmdb-trending-shows.tsx";
+import { TMDBAnimeTrending } from "./_components/tmdb-anime-trending/tmdb-anime-trending.tsx";
 
 /**
  * Home route with the now-playing hero, recently added items and trending
@@ -35,6 +36,7 @@ export default function HomePage() {
         >
           <TMDBTrendingShows />
         </div>
+        <TMDBAnimeTrending />
       </div>
     </div>
   );

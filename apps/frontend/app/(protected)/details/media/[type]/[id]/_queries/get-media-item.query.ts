@@ -51,6 +51,33 @@ export const GET_MEDIA_ITEM: TypedDocumentNode<
       budget
       imdbId
       isRequestable
+      ratings {
+        imdb {
+          logo
+          url
+          score
+        }
+        tmdb {
+          logo
+          url
+          score
+        }
+        metacritic {
+          logo
+          url
+          score
+        }
+        rottenTomatoes {
+          logo
+          url
+          score
+        }
+        trakt {
+          logo
+          url
+          score
+        }
+      }
       mediaItem {
         ... on MediaItem {
           id

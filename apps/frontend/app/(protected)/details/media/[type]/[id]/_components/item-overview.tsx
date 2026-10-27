@@ -13,7 +13,68 @@ import { ItemActionToolbar } from "./item-action-toolbar/item-action-toolbar";
 import type {
   IndexerData,
   MediaItem,
+  Rating,
+  Ratings,
 } from "#app/_types/__generated__/graphql.ts";
+
+function buildRatingsArray(ratings: Ratings | null): {
+  name: string;
+  image?: string;
+  score: string;
+  url: string;
+}[] | null {
+  if (!ratings) return null;
+
+  const result: {
+    name: string;
+    image?: string;
+    score: string;
+    url: string;
+  }[] = [];
+
+  if (ratings.imdb?.score) {
+    result.push({
+      name: "IMDb",
+      image: ratings.imdb.logo ? `imdb.svg` : undefined,
+      score: ratings.imdb.score,
+      url: ratings.imdb.url ?? "",
+    });
+  }
+  if (ratings.tmdb?.score) {
+    result.push({
+      name: "TMDb",
+      image: ratings.tmdb.logo ? `tmdb.svg` : undefined,
+      score: ratings.tmdb.score,
+      url: ratings.tmdb.url ?? "",
+    });
+  }
+  if (ratings.rottenTomatoes?.score) {
+    result.push({
+      name: "Rotten Tomatoes",
+      image: `rottentomatoes.svg`,
+      score: ratings.rottenTomatoes.score,
+      url: ratings.rottenTomatoes.url ?? "",
+    });
+  }
+  if (ratings.metacritic?.score) {
+    result.push({
+      name: "Metacritic",
+      image: `metacritic.svg`,
+      score: ratings.metacritic.score,
+      url: ratings.metacritic.url ?? "",
+    });
+  }
+  if (ratings.trakt?.score) {
+    result.push({
+      name: "Trakt",
+      image: `trakt.svg`,
+      score: ratings.trakt.score,
+      url: ratings.trakt.url ?? "",
+    });
+  }
+
+  return result.length > 0 ? result : null;
+}
 
 interface ItemOverviewProps {
   data: Omit<IndexerData, "mediaItem"> & {
@@ -100,23 +161,12 @@ export function ItemOverview({ data }: ItemOverviewProps) {
             ))}
           </div>
         )}
-        <RatingsRow
-          scores={[
-            {
-              name: "IMDb",
-              image: "imdb.svg",
-              score: "7.6",
-              url: "",
-            },
-            {
-              name: "TMDb",
-              image: "tmdb.svg",
-              score: "9.2",
-              url: "",
-            },
-          ]}
-          loading={false}
-        />
+        {data.ratings && (
+          <RatingsRow
+            scores={buildRatingsArray(data.ratings)}
+            loading={false}
+          />
+        )}
         <p
           className={cn(
             "text-muted-foreground max-w-4xl text-base leading-relaxed animation-duration-400 delay-350",

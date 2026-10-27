@@ -1,17 +1,20 @@
 import {
   CalendarDays,
+  Fire,
   FileClock,
   Home,
   LayoutDashboard,
   Library,
   Search,
   Settings,
+  Sparkles,
   User,
 } from "lucide-react";
 import { headers } from "next/headers";
 
 import { authClient } from "#lib/auth/client.ts";
 import { isFeatureEnabled } from "#lib/enabled-features.ts";
+import { NotificationsProvider } from "#components/providers/notifications-provider.tsx";
 
 import { PageWrapper } from "./_components/page-wrapper.tsx";
 
@@ -37,6 +40,8 @@ export default async function ProtectedLayout({ children }: LayoutProps<"/">) {
     },
     { href: "/library", icon: <Library />, label: "Library" },
     { href: "/explore", icon: <Search />, label: "Explore" },
+    { href: "/lists/trending/movies", icon: <Fire />, label: "Trending" },
+    { href: "/lists/trending/anime", icon: <Sparkles />, label: "Anime" },
     {
       href: "/calendar",
       icon: <CalendarDays />,
@@ -63,12 +68,14 @@ export default async function ProtectedLayout({ children }: LayoutProps<"/">) {
   ];
 
   return (
-    <PageWrapper
-      sidebarItems={sidebarItems}
-      user={authData?.user}
-      userAgentHeader={userAgentHeader}
-    >
-      {children}
-    </PageWrapper>
+    <NotificationsProvider>
+      <PageWrapper
+        sidebarItems={sidebarItems}
+        user={authData?.user}
+        userAgentHeader={userAgentHeader}
+      >
+        {children}
+      </PageWrapper>
+    </NotificationsProvider>
   );
 }
