@@ -1,6 +1,6 @@
 import z from "zod";
 
-export const ItemRequestAction = z.enum([
+export const MediaItemAction = z.enum([
   /**
    * Action to request a single item (e.g. for a movie)
    */
@@ -52,4 +52,4 @@ export const ItemRequestAction = z.enum([
   "manual_scrape",
 ]);
 
-export type ItemRequestAction = z.infer<typeof ItemRequestAction>;
+export type MediaItemAction = z.infer<typeof MediaItemAction>;
